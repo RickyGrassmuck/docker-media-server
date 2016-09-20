@@ -27,8 +27,8 @@ services:
     ports: 
       - "32400:32400"
     environment:
-     - PLEX_USERNAME=joyrida08
-     - PLEX_PASSWORD=Pfcgman08
+     - PLEX_USERNAME=<username>
+     - PLEX_PASSWORD=<passwor>
     volumes:
      - /media:/media
 
