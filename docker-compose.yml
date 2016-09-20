@@ -1,0 +1,56 @@
+# docker-compose.yml
+version: '2'
+
+services:
+  plexrequests:
+    image: lokenx/plexrequests-meteor
+    container_name: plexrequests
+    ports:
+     - "3000:80"
+    links:
+     - mongo
+    environment:
+     - MONGO_URL=mongodb://mongo:27017/plexrequests
+     - ROOT_URL=http://localhost/
+    volumes:
+     - /media:/media
+
+  mongo:
+    container_name: mongodb
+    image: mongo:latest
+
+  plex:
+    image: timhaak/plex
+    container_name: plex-media-server
+    hostname: plex.localhost
+    restart: always
+    ports: 
+      - "32400:32400"
+    environment:
+     - PLEX_USERNAME=joyrida08
+     - PLEX_PASSWORD=Pfcgman08
+    volumes:
+     - /media:/media
+
+  sonarr:
+    image: tuxeh/sonarr:latest
+    container_name: sonarr
+    ports:
+     - "8989:8989"
+     - "9898:9898"
+    restart: always
+    volumes:
+     - /apps/configs/sonarr:/volumes/configs
+     - /media:/volumes/media
+     - /media/nzbget/downloads/completed/:/volumes/completed
+
+  nzbget:
+    image: linuxserver/nzbget
+    container_name: nzbget
+    ports:
+     - "6789:6789"
+    restart: always
+    volumes:
+     - /apps/configs/nzbget:/volumes/configs
+     - /media/nzbget:/volumes/nzbget
+    
