@@ -9,7 +9,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - PUID=1010
+      - PUID=
       - PGID=
     volumes:
       - /etc/localtime:/etc/localtime:ro
@@ -22,7 +22,7 @@ services:
     restart: always
     environment:
       - VERSION=latest
-      - PUID=1010
+      - PUID=
       - PGID=
     volumes:
       - /apps/configs/plex:/config
@@ -38,7 +38,7 @@ services:
     restart: always
     environment:
       - PGID=
-      - PUID=1010
+      - PUID=
     volumes:
       - /dev/rtc:/dev/rtc:ro
       - /apps/configs/sonarr:/config
@@ -53,7 +53,7 @@ services:
     restart: always
     environment:
       - PGID=
-      - PUID=1010
+      - PUID=
     volumes:
       - /apps/configs/couchpotato:/config
       - /media/movies:/movies
@@ -64,7 +64,7 @@ services:
     container_name: nzbget
     environment:
       - PGID=
-      - PUID=1010
+      - PUID=
     ports:
       - "6789:6789"
     restart: always
@@ -78,7 +78,7 @@ services:
     network_mode: host
     environment:
       - PGID=
-      - PUID=1010
+      - PUID=
     restart: always
     volumes:
       - /apps/configs/deluge:/config

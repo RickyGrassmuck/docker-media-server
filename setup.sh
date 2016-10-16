@@ -48,23 +48,22 @@ function tests() {
 }
 
 function setup(){
-	if [[ ! -f ${yml_path} ]] && [[ -f ${yml_path}.template ]]; then
-		cp "${yml_path}.template" "${yml_path}"
-	fi
 
 	#### Create user and group "plex". If already created, set the uid and gid to 1010(used by docker-compose)
-	plex_uid=$(id -u plex)
-
-	if [[ ! ${plex_uid} ]]; then
-		echo "Creating user plex"
-		useradd -g 1010 -u 1010 -m plex
-	else
-		plex_gid=$(id -g plex)
-		echo "Updating PUID and PGID values in docker-compose.yml"
-		/usr/bin/perl -p -i -e "s/PUID=/PUID=${plex_uid}/g" ${yml_path}
-		/usr/bin/perl -p -i -e "s/PGID=/PGID=${plex_gid}/g" ${yml_path}		
-	fi
+	plex_user=$(grep plex /etc/passwd)
 	
+	if [[ -z ${plex_user} ]]; then
+		echo "Creating user plex"
+		useradd -u 1010 -U -m plex
+		plex_uid=$(id -u plex)
+		plex_gid=$(id -g plex)
+	else
+		plex_uid=$(id -u plex)
+		plex_gid=$(id -g plex)
+		/usr/bin/perl -p -i.template -e "s/PUID=/PUID=${plex_uid}/g" ${yml_path}
+		/usr/bin/perl -p -i.template -e "s/PGID=/PGID=${plex_gid}/g" ${yml_path}
+	fi
+
     ## Add fstab entries to bind mount our media and app config directories
     fstab_media=$(grep "/home/plex/media /media" /etc/fstab)
     fstab_apps=$(grep "/home/plex/apps /apps" /etc/fstab)
@@ -122,21 +121,26 @@ EOF
 	chown -R plex:plex /media /apps
 
     ## Create home for the the docker-compose.yml and copy it there
-	echo "Creating application directory at ${docker_mediaserver_dir}"
-	mkdir -p ${docker_mediaserver_dir}/
-	echo "Moving docker compose to application directory"
-	mv ${yml_path} ${docker_mediaserver_dir}/
 	
 	if [[ ${has_systemd} -eq 1 ]]; then
+		echo "Creating application directory at ${docker_mediaserver_dir}"
+		mkdir -p ${docker_mediaserver_dir}/
+		echo "Moving docker compose to application directory"
+		cp ${yml_path} ${docker_mediaserver_dir}/
 		generate_unit_file
 		mv ${unit_file_path} /etc/systemd/system/
 		${systemctl_path} daemon-reload
 		echo "Enabling compose-mediaserver.service"
 		${systemctl_path} enable compose-mediaserver.service 
 		echo "Run systemctl start compose-mediaserver.service to start"
+    		touch "${docker_mediaserver_dir}/.setup_run"
+	else
+		touch "${script_dir}/.setup_run"
+		echo "Run docker-compose up -d from:"
+		echo "  ${script_dir}"	
 	fi
+	
 	echo "Setup Complete"
-    touch "${docker_mediaserver_dir}/.setup_run"
 }
 
 ## Function used to generate a systemd unit file with the proper configs
