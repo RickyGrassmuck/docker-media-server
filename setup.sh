@@ -60,10 +60,10 @@ function setup(){
 	else
 		plex_uid=$(id -u plex)
 		plex_gid=$(id -g plex)
-		/usr/bin/perl -p -i.template -e "s/PUID=/PUID=${plex_uid}/g" ${yml_path}
-		/usr/bin/perl -p -i.template -e "s/PGID=/PGID=${plex_gid}/g" ${yml_path}
 	fi
 
+	/usr/bin/perl -p -i.template -e "s/PUID=/PUID=${plex_uid}/g" ${yml_path}
+	/usr/bin/perl -p -i.template -e "s/PGID=/PGID=${plex_gid}/g" ${yml_path}
     ## Add fstab entries to bind mount our media and app config directories
     fstab_media=$(grep "/home/plex/media /media" /etc/fstab)
     fstab_apps=$(grep "/home/plex/apps /apps" /etc/fstab)
