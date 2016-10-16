@@ -43,7 +43,7 @@ services:
       - /dev/rtc:/dev/rtc:ro
       - /apps/configs/sonarr:/config
       - /media/tv:/tv
-      - /media/nzbget/downloads/completed/:/downloads
+      - /media/downloads/:/downloads
 
   couchpotato:
     image: linuxserver/couchpotato:latest 
@@ -57,7 +57,7 @@ services:
     volumes:
       - /apps/configs/couchpotato:/config
       - /media/movies:/movies
-      - /media/nzbget/downloads/completed/:/downloads
+      - /media/downloads/:/downloads
 
   nzbget:
     image: linuxserver/nzbget:latest
@@ -70,5 +70,16 @@ services:
     restart: always
     volumes:
       - /apps/configs/nzbget:/config
-      - /media/nzbget:/downloads
+      - /media/downloads:/downloads
     
+  deluge:
+    image: linuxserver/deluge:latest
+    container_name: deluge
+    network_mode: host
+    environment:
+      - PGID=1010
+      - PUID=1010
+    restart: always
+    volumes:
+      - /apps/configs/deluge:/config
+      - /media/downloads:/downloads

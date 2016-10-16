@@ -1,0 +1,12 @@
+[Unit]
+Requires=docker.service
+After=docker.service
+
+[Service]
+User=root
+Restart=always
+ExecStart=/usr/bin/docker-compose -f /usr/local/share/docker/docker-mediaserver/docker-compose.yml up
+ExecStop=/usr/bin/docker-compose -f /usr/local/share/docker/docker-mediaserver/docker-compose.yml down
+
+[Install]
+WantedBy=default.target

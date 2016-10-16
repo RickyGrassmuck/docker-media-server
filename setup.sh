@@ -1,12 +1,10 @@
-################################################################################################################
-#### The script needs to perform the actions listed out below. They pretty much need to happen in the order
-#### that they are listed. 
-####
-#### ** Bonus points for using tests to make sure things don't already exist as well as that they were created
-####    properly afterwards.
-################################################################################################################
+#!/bin/bash
+if [[ $UID -ne 0 ]]; then
+	echo "Must be run as root"
+	exit 1;
+fi
 
-#### User and Group that needs to be created
+#### Create user and group "plex". If already created, set the uid and gid to 1010(used by docker-compose)
 
 if [[ ! $(grep "plex" /etc/passwd) ]]; then
 	if [[ ! $(grep "plex" /etc/group) ]]; then
@@ -26,40 +24,42 @@ else
 	fi
 fi
 
+## Add fstab entries to bind mount our media and app config directories
 echo "/home/plex/media /media none defaults,bind 0 0" >> /etc/fstab
 echo "/home/plex/apps /apps none defaults,bind 0 0" >> /etc/fstab
 
-mkdir /apps
+## Create the /apps and /media directories
+if [[ ! -d "/apps" ]]; then
+	mkdir /apps
+fi
 
+if [[ ! -d "/media" ]]; then
+	mkdir /media
+fi
+
+## bind mount the /apps and /media directories
 mount /apps
 mount /media
 
-#### Directories to create
-## The directories below should be owned by user plex and group plex
+## Create subdirectories and change ownershihp to plex
+mkdir -p /apps/configs/{plex,plexrequests,nzbget,sonarr,couchpotato,deluge}
+mkdir -p /media/{movies,tv,downloads}
+chown -R plex:plex /media /apps
 
-mkdir -p /apps/configs/{plex,plexrequests,nzbget,sonarr,couchpotato}
-chown -R plex:plex /apps
+## Create home for the the docker-compose.yml and copy it there
+mkdir -p /usr/local/share/docker/docker-mediaserver/
+cp ./docker-compose.yml /usr/local/share/docker/docker-mediaserver/
 
-## The directories below should be owned by the user plex and the group plex. Need to have permissions set to 0775
+has_systemd=$(which systemctl);
+if [[ ! -z $has_systemd ]]; then
+	docker_path=$(which docker-compose)  
+	cp ./systemd/compose-mediaserver.service /etc/systemd/system/
+	if [[ ${docker_path} != "/usr/bin/docker-compose" ]]; then
+		echo "Please edit /etc/systemd/system/compose-mediaserver.service to use the correct path to docker-compose"
+	fi
+	echo "Run systemctl enable compose-mediaserver.service to enable"
+	echo "Run systemctl start compose-mediaserver.service to start"
+fi
 
-mkdir -p /media/{movies,tv,nzbget}
-chown -R plex:plex /media
 
-#### Yum stuffs to get things in order before we can use docker
-
-## Add the docker repo, the command below is the exact command that needs to be executed to create the repo.
-
-sudo tee /etc/yum.repos.d/docker.repo <<-'EOF'
-[dockerrepo]
-name=Docker Repository
-baseurl=https://yum.dockerproject.org/repo/main/fedora/${releasever}/
-enabled=1
-gpgcheck=1
-gpgkey=https://yum.dockerproject.org/gpg
-EOF
-
-## Install some goodies with yum
-
-dnf update -y
-dnf install -y nginx docker-engine docker-compose
 
