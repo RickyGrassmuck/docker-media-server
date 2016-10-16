@@ -6,22 +6,44 @@
 ####    properly afterwards.
 ################################################################################################################
 
-#### Group that needs to be created
+#### User and Group that needs to be created
 
-- media
+if [[ ! $(grep "plex" /etc/passwd) ]]; then
+	if [[ ! $(grep "plex" /etc/group) ]]; then
+		groupadd -g 1010 plex
+		useradd -g 1010 -u 1010 -m plex
+	else
+		groupmod -g 1010 plex
+		useradd -g 1010 -u 1010 -m plex
+	fi
+else
+	if [[ ! $(grep "plex" /etc/group) ]]; then
+		groupadd -g 1010 plex
+		usermod -g 1010 -u 1010 plex
+	else
+		groupmod -g 1010 plex
+		usermod -g 1010 -u 1010 plex
+	fi
+fi
+
+echo "/home/plex/media /media none defaults,bind 0 0" >> /etc/fstab
+echo "/home/plex/apps /apps none defaults,bind 0 0" >> /etc/fstab
+
+mkdir /apps
+
+mount /apps
+mount /media
 
 #### Directories to create
-## The directories below should be owned by user root and the group media
+## The directories below should be owned by user plex and group plex
 
-- /apps
-- /apps/configs
+mkdir -p /apps/configs/{plex,plexrequests,nzbget,sonarr,couchpotato}
+chown -R plex:plex /apps
 
-## The directories below should be owned by the user plex and the group "media". Need to have permissions set to 0775
+## The directories below should be owned by the user plex and the group plex. Need to have permissions set to 0775
 
-- /media 
-- /media/movies
-- /media/tv
-- /media/nzbget/downloads
+mkdir -p /media/{movies,tv,nzbget}
+chown -R plex:plex /media
 
 #### Yum stuffs to get things in order before we can use docker
 
@@ -30,7 +52,7 @@
 sudo tee /etc/yum.repos.d/docker.repo <<-'EOF'
 [dockerrepo]
 name=Docker Repository
-baseurl=https://yum.dockerproject.org/repo/main/centos/7/
+baseurl=https://yum.dockerproject.org/repo/main/fedora/${releasever}/
 enabled=1
 gpgcheck=1
 gpgkey=https://yum.dockerproject.org/gpg
@@ -38,8 +60,6 @@ EOF
 
 ## Install some goodies with yum
 
-- yum update
-- yum install epel-release
-- yum install docker-engine git
-
+dnf update -y
+dnf install -y nginx docker-engine docker-compose
 

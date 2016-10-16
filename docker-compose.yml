@@ -2,55 +2,73 @@
 version: '2'
 
 services:
+
   plexrequests:
-    image: lokenx/plexrequests-meteor
+    image: linuxserver/plexrequests
     container_name: plexrequests
     ports:
-     - "3000:80"
-    links:
-     - mongo
+      - "3000:3000"
     environment:
-     - MONGO_URL=mongodb://mongo:27017/plexrequests
-     - ROOT_URL=http://localhost/
+      - PUID=1010
+      - PGID=1010
     volumes:
-     - /media:/media
-
-  mongo:
-    container_name: mongodb
-    image: mongo:latest
+      - /etc/localtime:/etc/localtime:ro
+      - /apps/configs/plexrequests:/config 
 
   plex:
-    image: timhaak/plex
-    container_name: plex-media-server
-    hostname: plex.localhost
+    image: linuxserver/plex
+    container_name: plex
+    network_mode: host
     restart: always
-    ports: 
-      - "32400:32400"
     environment:
-     - PLEX_USERNAME=<username>
-     - PLEX_PASSWORD=<passwor>
+      - VERSION=latest
+      - PUID=1010
+      - PGID=1010
     volumes:
-     - /media:/media
-
+      - /apps/configs/plex:/config
+      - /media/movies:/data/movies
+      - /media/tv:/data/tvshows
+  
   sonarr:
-    image: tuxeh/sonarr:latest
+    image: linuxserver/sonarr:latest 
     container_name: sonarr
     ports:
-     - "8989:8989"
-     - "9898:9898"
+      - "8989:8989"
+      - "9898:9898"
     restart: always
+    environment:
+      - PGID=1010
+      - PUID=1010
     volumes:
-     - /apps/configs/sonarr:/volumes/configs
-     - /media:/volumes/media
-     - /media/nzbget/downloads/completed/:/volumes/completed
+      - /dev/rtc:/dev/rtc:ro
+      - /apps/configs/sonarr:/config
+      - /media/tv:/tv
+      - /media/nzbget/downloads/completed/:/downloads
+
+  couchpotato:
+    image: linuxserver/couchpotato:latest 
+    container_name: couchpotato
+    ports:
+      - "5050:5050"
+    restart: always
+    environment:
+      - PGID=1010
+      - PUID=1010
+    volumes:
+      - /apps/configs/couchpotato:/config
+      - /media/movies:/movies
+      - /media/nzbget/downloads/completed/:/downloads
 
   nzbget:
-    image: linuxserver/nzbget
+    image: linuxserver/nzbget:latest
     container_name: nzbget
+    environment:
+      - PGID=1010
+      - PUID=1010
     ports:
-     - "6789:6789"
+      - "6789:6789"
     restart: always
     volumes:
-     - /apps/configs/nzbget:/volumes/configs
-     - /media/nzbget:/volumes/nzbget
+      - /apps/configs/nzbget:/config
+      - /media/nzbget:/downloads
     
