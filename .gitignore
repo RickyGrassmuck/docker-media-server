@@ -1,1 +1,3 @@
 .setup_run
+*.template
+*.env
