@@ -12,6 +12,10 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /apps/configs/plexrequests:/config 
+    links:
+      - couchpotato
+      - sonarr
+      - plex
 
   plex:
     image: linuxserver/plex
@@ -39,6 +43,10 @@ services:
       - /apps/configs/sonarr:/config
       - /media/tv:/tv
       - /media/downloads/:/downloads
+    links:
+      - nzbget
+      - deluge
+      - plex
 
   couchpotato:
     image: linuxserver/couchpotato:latest 
@@ -51,6 +59,10 @@ services:
       - /apps/configs/couchpotato:/config
       - /media/movies:/movies
       - /media/downloads/:/downloads
+    links:
+      - plex
+      - nzbget
+      - deluge
 
   nzbget:
     image: linuxserver/nzbget:latest
@@ -81,3 +93,5 @@ services:
     volumes:
       - /apps/configs/plexpy:/config
       - /apps/configs/plex/Library/Application\ Support/Plex\ Media\ Server/Logs/:/logs
+    links:
+      - plex
