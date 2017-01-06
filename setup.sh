@@ -16,7 +16,7 @@ yml_file="${script_dir}/docker-compose.yml"
 unit_file="${script_dir}/compose-mediaserver.service"
 env_file="${script_dir}/ids.env"
 
-declare -a services=(plex plexrequests nzbget sonarr couchpotato deluge plexpy)
+declare -a services=(plex plexrequests nzbget sonarr couchpotato plexpy)
 
 ## Tests
 function tests() {
@@ -218,6 +218,7 @@ After=docker.service
 [Service]
 User=root
 Restart=always
+ExecPreStart=${docker_compose} -f ${app_dir}/docker-compose.yml pull
 ExecStart=${docker_compose} -f ${app_dir}/docker-compose.yml up
 ExecStop=${docker_compose} -f ${app_dir}/docker-compose.yml down
 

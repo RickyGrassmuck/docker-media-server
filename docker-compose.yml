@@ -18,7 +18,7 @@ services:
       - plex
 
   plex:
-    image: linuxserver/plex
+    image: plexinc/pms-docker
     env_file: ./ids.env
     container_name: plex
     network_mode: host
@@ -75,16 +75,6 @@ services:
       - /apps/configs/nzbget:/config
       - /media/downloads:/downloads
     
-  deluge:
-    image: linuxserver/deluge:latest
-    env_file: ./ids.env
-    container_name: deluge
-    network_mode: host
-    restart: always
-    volumes:
-      - /apps/configs/deluge:/config
-      - /media/downloads:/downloads
-
   plexpy:
     image: linuxserver/plexpy:latest
     env_file: ./ids.env
@@ -94,4 +84,3 @@ services:
       - /apps/configs/plexpy:/config
       - /apps/configs/plex/Library/Application\ Support/Plex\ Media\ Server/Logs/:/logs
     links:
-      - plex

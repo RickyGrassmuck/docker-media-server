@@ -2,3 +2,4 @@
 *.template
 *.env
 *.service
+systemd/*
