@@ -45,7 +45,6 @@ services:
       - /media/downloads/:/downloads
     links:
       - nzbget
-      - deluge
       - plex
 
   couchpotato:
@@ -62,7 +61,6 @@ services:
     links:
       - plex
       - nzbget
-      - deluge
 
   nzbget:
     image: linuxserver/nzbget:latest
@@ -84,3 +82,4 @@ services:
       - /apps/configs/plexpy:/config
       - /apps/configs/plex/Library/Application\ Support/Plex\ Media\ Server/Logs/:/logs
     links:
+      - plex
