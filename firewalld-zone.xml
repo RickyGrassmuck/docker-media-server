@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zone>
+  <short>Media Server</short>
+  <description>Set of services and ports needed for various media server applications to function</description>
+  <service name="ssh"/>
+  <service name="dhcpv6-client"/>
+  <service name="http"/>
+  <service name="dns"/>
+  <service name="https"/>
+  <port protocol="tcp" port="32400"/>
+  <port protocol="tcp" port="9993"/>
+  <port protocol="tcp" port="64538"/>
+  <port protocol="tcp" port="8112"/>
+  <port protocol="udp" port="68"/>
+  <port protocol="udp" port="772"/>
+  <port protocol="udp" port="1901"/>
+  <port protocol="udp" port="6771"/>
+  <port protocol="udp" port="9993"/>
+  <port protocol="udp" port="10549"/>
+  <port protocol="udp" port="32400-32420"/>
+  <port protocol="udp" port="36141"/>
+  <port protocol="udp" port="45156"/>
+  <port protocol="udp" port="57183"/>
+  <port protocol="udp" port="64538"/>
+</zone>

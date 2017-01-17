@@ -15,12 +15,12 @@ function install_docker() {
   pip install docker-compose
 }
 
-install_docker
 
 ## Define some variables
 docker=$(type -p docker)
 docker_compose=$(type -p docker-compose)
 systemctl=$(type -p systemctl)
+firewalld=$(type -p firewalld)
 
 script_dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 app_dir="/usr/local/share/docker/docker-mediaserver"
@@ -44,7 +44,8 @@ function tests() {
 		  i=0
 		  while [[ $i -lt ${len} ]]; do
         if [[ -z ${tests[${i}]} ]]; then
-				  echo "${tests[${i}]} was not found, please install before running setup";
+				  echo "${tests[${i}]} was not found, attempting to install";
+          install_docker
 				  exit 1;
 		    else
 			    echo "${tests[${i}]} found";
@@ -63,6 +64,13 @@ function tests() {
 			echo "OS using Systemd"
 		else
 			has_systemd=0
+		fi
+		
+    if [[ ! -z ${4} ]]; then
+			has_firewalld=1
+			echo "OS using Firewalld"
+		else
+			has_firewalld=0
 		fi
 
 }
@@ -207,6 +215,12 @@ EOF
       ## Reload systemd daemon to load new service file
       "${systemctl}" daemon-reload
       
+      ## Install firewalld zone and activate
+      if [[ ${has_firewalld} -eq 1 ]]; then
+        echo "Installing firewall rules"
+        install_firewalld_zone
+      fi
+
       ## Enable service
       echo "Enabling compose-mediaserver.service"
       "${systemctl}" enable compose-mediaserver.service 
@@ -231,7 +245,7 @@ After=docker.service
 
 [Service]
 User=root
-Restart=always
+Restart=on-failure
 ExecPreStart=${docker_compose} -f ${app_dir}/docker-compose.yml pull
 ExecStart=${docker_compose} -f ${app_dir}/docker-compose.yml up
 ExecStop=${docker_compose} -f ${app_dir}/docker-compose.yml down
@@ -242,6 +256,14 @@ EOF
 
 }
 
-install_docker
-tests "${docker}" "${docker_compose}" "${systemctl}"
+function install_firewalld_zone() {
+  echo "Creating zone file"
+  cp firewalld-zone.xml /etc/firewalld/zones/MediaServer.xml
+  echo "Setting active and default zone to MediaServer"
+  firewall-cmd --permanent --set-default-zone=MediaServer
+  echo "Reloading firewalld"
+  firewall-cmd --complete-reload
+}
+
+tests "${docker}" "${docker_compose}" "${systemctl}" "${firewalld}"
 setup 
