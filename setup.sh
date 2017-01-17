@@ -18,6 +18,17 @@ env_file="${script_dir}/ids.env"
 
 declare -a services=(plex plexrequests nzbget sonarr couchpotato plexpy)
 
+## Install Prerequisites
+function install_prereqs() {
+  yum -y update
+  yum -y install epel-release
+  yum -y install git python-pip
+  pip install --upgrade pip
+  curl -sL https://get.docker.com > docker.sh
+  bash docker.sh
+  pip install docker-compose
+}
+
 ## Tests
 function tests() {
 	
@@ -228,5 +239,6 @@ EOF
 
 }
 
+install_prereqs
 tests "${docker}" "${docker_compose}" "${systemctl}"
 setup 

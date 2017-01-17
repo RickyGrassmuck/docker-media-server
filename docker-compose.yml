@@ -8,7 +8,7 @@ services:
     env_file: ./ids.env
     container_name: plexrequests
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /apps/configs/plexrequests:/config 
@@ -35,8 +35,8 @@ services:
     env_file: ./ids.env
     container_name: sonarr
     ports:
-      - "8989:8989"
-      - "9898:9898"
+      - "127.0.0.1:8989:8989"
+      - "127.0.0.1:9898:9898"
     restart: always
     volumes:
       - /dev/rtc:/dev/rtc:ro
@@ -52,7 +52,7 @@ services:
     env_file: ./ids.env
     container_name: couchpotato
     ports:
-      - "5050:5050"
+      - "127.0.0.1:5050:5050"
     restart: always
     volumes:
       - /apps/configs/couchpotato:/config
@@ -67,7 +67,7 @@ services:
     env_file: ./ids.env
     container_name: nzbget
     ports:
-      - "6789:6789"
+      - "127.0.0.1:6789:6789"
     restart: always
     volumes:
       - /apps/configs/nzbget:/config
@@ -77,6 +77,8 @@ services:
     image: linuxserver/plexpy:latest
     env_file: ./ids.env
     container_name: plexpy
+    ports:
+      - "127.0.0.1:8181:8181"
     restart: always
     volumes:
       - /apps/configs/plexpy:/config
