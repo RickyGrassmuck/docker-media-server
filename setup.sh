@@ -4,6 +4,20 @@ if [[ $UID -ne 0 ]]; then
     exit 1;
 fi
 
+
+## Install Prerequisites
+function install_docker() {
+  dnf -y update
+  dnf -y install python-pip
+  pip install --upgrade pip
+  curl -sL https://get.docker.com > docker.sh
+  bash docker.sh
+  pip install docker-compose
+}
+
+install_docker
+
+## Define some variables
 docker=$(type -p docker)
 docker_compose=$(type -p docker-compose)
 systemctl=$(type -p systemctl)
@@ -17,16 +31,6 @@ unit_file="${script_dir}/compose-mediaserver.service"
 env_file="${script_dir}/ids.env"
 
 declare -a services=(plex plexrequests nzbget sonarr couchpotato plexpy)
-
-## Install Prerequisites
-function install_docker() {
-  dnf -y update
-  dnf -y install python-pip
-  pip install --upgrade pip
-  curl -sL https://get.docker.com > docker.sh
-  bash docker.sh
-  pip install docker-compose
-}
 
 ## Tests
 function tests() {
