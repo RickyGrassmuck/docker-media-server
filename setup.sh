@@ -262,5 +262,6 @@ function install_firewalld_zone() {
   firewall-cmd --complete-reload
 }
 
+install_docker
 tests "${docker}" "${docker_compose}" "${systemctl}" "${firewalld}"
 setup 
