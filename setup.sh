@@ -18,7 +18,7 @@ yml_file="${script_dir}/docker-compose.yml"
 unit_file="${script_dir}/compose-mediaserver.service"
 env_file="${script_dir}/ids.env"
 
-declare -a services=(plex plexrequests nzbget sonarr couchpotato plexpy nginx)
+declare -a services=(plex plexrequests nzbget sonarr radarr couchpotato plexpy nginx)
 
 ## Tests
 function tests() {
@@ -72,8 +72,17 @@ function install_docker() {
   pip install docker-compose
 }
 
-function setup(){
+function disable_selinux() {
+  if [[ $(getenforce) != "Permissive" ]]; then
+    setenforce 0;
+    if [[ $(getenforce) == "Permissive" ]]; then
+      echo "Selinux set to Permissive";
+  
+    fi
+  fi
+}
 
+function create_plex_user() {
     #### Create user and group "plex". If already created, set the uid and gid to 1010(used by docker-compose)
     plex_user=$(grep plex /etc/passwd)
     
@@ -93,7 +102,9 @@ function setup(){
 
     echo "PUID=${plex_uid}" >> ids.env
     echo "PGID=${plex_gid}" >> ids.env
+}
 
+function create_bind_mounts(){
     ## Add fstab entries to bind mount our media and app config directories
     fstab_media=$(grep "/home/plex/media /media" /etc/fstab)
     fstab_apps=$(grep "/home/plex/apps /apps" /etc/fstab)
@@ -116,7 +127,10 @@ EOF
       echo "/apps fstab entry exists"
     fi
 
-    ## Create the /apps and /media directories
+}
+
+function create_app_dirs() {
+## Create the /apps and /media directories
     if [[ ! -d "/apps" ]]; then
       echo "Creating /apps"
       mkdir /apps
@@ -133,7 +147,7 @@ EOF
       chown plex:plex /home/plex/{apps,media}
     fi
     
-      ## bind mount the /apps and /media directories
+## bind mount the /apps and /media directories
     apps_mount=$(mount | grep "/home/plex/apps")
     media_mount=$(mount | grep "/home/plex/media")
     if [[ ! ${apps_mount} ]]; then
@@ -146,7 +160,7 @@ EOF
       mount /media
     fi
 
-    ## Create directory trees
+## Create directory trees
     if [[ ! -d ${config_dir} ]]; then
       echo "Creating ${config_dir}"
       mkdir -p /apps/configs
@@ -177,65 +191,33 @@ EOF
 
     if [[ ! -d "/media/downloads/nzb" ]]; then
       echo "Creating: "
-      echo " - /media/downloads/nzb"
-      echo " - /media/downloads/nzb/completed"
-      echo " - /media/downloads/nzb/intermediate"
-      mkdir -p "/media/downloads/nzb/"{completed,intermediate}
+      echo " - /media/downloads/nzbget"
+      echo " - /media/downloads/nzbget/completed"
+      echo " - /media/downloads/nzbget/intermediate"
+      mkdir -p "/media/downloads/nzbget/"{completed,intermediate,logs}
     else
-      echo "/media/downloads/nzb already exists, skipping"
+      echo "/media/downloads/nzbget already exists, skipping"
     fi
 
     echo "Changing Directory Ownership"
     chown -R plex:plex /media /apps
 
-      ## Create home for the the docker-compose.yml and copy it there
-    
+}
+function create_app_dir() {
+
+  ## Create home for the the docker-compose.yml and copy it there
     if [[ ${has_systemd} -eq 1 ]]; then
-      ## Create directory to store docker-compose files
+    
+    ## Create directory to store docker-compose files
       echo "Creating application directory at ${app_dir}"
       mkdir -p ${app_dir}/
       
-      ## Move files to new directory
+    ## Move files to new directory
       echo "Moving docker compose to application directory"
       cp "${yml_file}" "${app_dir}/"
       mv "${env_file}" "${app_dir}/"
 
-      ## Generate a systemd service file and move it to /etc/systemd/system
-      generate_unit_file
-      
-      if [[ -f ${unit_file} ]]; then
-        cp "${unit_file}" /etc/systemd/system/
-      else
-        echo "Unit file not found, something may have gone wrong generating"
-      fi
-        
-      ## Reload systemd daemon to load new service file
-      "${systemctl}" daemon-reload
-      
-      ## Install firewalld zone and activate
-      if [[ ${has_firewalld} -eq 1 ]]; then
-        echo "Installing firewall rules"
-        install_firewalld_zone
-      fi
-
-      ## Enable service
-      echo "Enabling compose-mediaserver.service"
-      "${systemctl}" enable compose-mediaserver.service 
-      
-      echo "Run systemctl start compose-mediaserver.service to start"
-      touch "${app_dir}/.setup_run"
-    
-    else  
-      touch "${script_dir}/.setup_run"
-      echo "Run docker-compose up -d from: ${script_dir}"	
-    fi
-    
-    echo "Setup Complete"
-}
-
-## Function used to generate a systemd unit file with the proper configs
-function generate_unit_file() {
-	cat << EOF > "${unit_file}"
+      cat << EOF > "${unit_file}"
 [Unit]
 Requires=docker.service
 After=docker.service
@@ -251,17 +233,50 @@ ExecStop=${docker_compose} -f ${app_dir}/docker-compose.yml down
 WantedBy=default.target
 EOF
 
+      if [[ -f ${unit_file} ]]; then
+        cp "${unit_file}" /etc/systemd/system/
+        ## Reload systemd daemon to load new service file
+        "${systemctl}" daemon-reload
+      else
+        echo "Unit file not found, something may have gone wrong generating"
+      fi
+      
+      echo "Enabling compose-mediaserver.service"
+      "${systemctl}" enable compose-mediaserver.service 
+      
+      echo "Run systemctl start compose-mediaserver.service to start"
+      touch "${app_dir}/.setup_run"
+    else  
+      touch "${script_dir}/.setup_run"
+      echo "Run docker-compose up -d from: ${script_dir}"	
+    fi
 }
 
-function install_firewalld_zone() {
-  echo "Creating zone file"
-  cp firewalld-zone.xml /etc/firewalld/zones/MediaServer.xml
-  echo "Setting active and default zone to MediaServer"
-  firewall-cmd --permanent --set-default-zone=MediaServer
-  echo "Reloading firewalld"
-  firewall-cmd --complete-reload
+function enable_firewalld_zone() {
+
+## Install firewalld zone and activate
+    echo "Installing firewall rules"
+    echo "Creating zone file"
+    cp firewalld-zone.xml /etc/firewalld/zones/MediaServer.xml
+    echo "Setting active and default zone to MediaServer"
+    firewall-cmd --permanent --set-default-zone=MediaServer
+    echo "Reloading firewalld"
+    firewall-cmd --complete-reload
 }
 
-install_docker
+function run(){
+    disable_selinux
+    install_docker
+    create_plex_user
+    create_bind_mounts
+    create_app_dirs
+
+    if [[ ${has_firewalld} -eq 1 ]]; then
+      enable_firewalld_zone    
+    fi
+
+    echo "Setup Complete"
+}
+
 tests "${docker}" "${docker_compose}" "${systemctl}" "${firewalld}"
-setup 
+run
