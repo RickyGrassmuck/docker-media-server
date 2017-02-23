@@ -64,8 +64,8 @@ function tests() {
 }
 
 function install_docker() {
-  dnf -y update
-  dnf -y install python-pip
+  yum -y update
+  yum -y install python-pip
   pip install --upgrade pip
   curl -sL https://get.docker.com > docker.sh
   bash docker.sh
@@ -259,7 +259,7 @@ function enable_firewalld_zone() {
     echo "Creating zone file"
     cp firewalld-zone.xml /etc/firewalld/zones/MediaServer.xml
     echo "Setting active and default zone to MediaServer"
-    firewall-cmd --permanent --set-default-zone=MediaServer
+    firewall-cmd --set-default-zone=MediaServer
     echo "Reloading firewalld"
     firewall-cmd --complete-reload
 }
