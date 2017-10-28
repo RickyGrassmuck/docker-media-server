@@ -8,11 +8,12 @@ fi
 ## Install Prerequisites
 function install_docker() {
   if [[ ! -z $(grep CentOS /etc/redhat-release) ]];
-    then
-      PKG_MGR="yum"
-    elif [[ ! -z $(grep Fedora /etc/redhat-release) ]];
-      PKG_MGR="dnf"
-    else
+  then
+    PKG_MGR="yum"
+  elif [[ ! -z $(grep Fedora /etc/redhat-release) ]];
+  then
+    PKG_MGR="dnf"
+  else
       echo "Not a supported Platform"
       exit 1;
   fi
