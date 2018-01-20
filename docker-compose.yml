@@ -85,3 +85,12 @@ services:
       - /apps/configs/plex/Library/Application\ Support/Plex\ Media\ Server/Logs/:/logs
     links:
       - plex
+  
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /etc/nginx:/etc/nginx
+    command: /bin/bash -c "nginx -g 'daemon off;'"
