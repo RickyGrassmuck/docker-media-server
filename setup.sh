@@ -17,12 +17,22 @@ function install_docker() {
       exit 1;
   fi
   
-  ${PKG_MGR} -y update
-  ${PKG_MGR} dnf -y install python-pip
-  pip install --upgrade pip
-  curl -sL https://get.docker.com > docker.sh
-  bash docker.sh
-  pip install docker-compose
+  if [[ ! -z $(which docker) ]];
+  then
+    if [[ "${PKG_MGR}" == "yum" ]]; 
+    then
+	${PKG_MGR} -y update
+  	${PKG_MGR} -y install python-pip
+  	pip install --upgrade pip
+  	curl -sL https://get.docker.com > docker.sh
+  	bash docker.sh
+  	pip install docker-compose
+    else
+        ${PKG_MGR} -y update
+        ${PKG_MGR} config-manager --set-enabled updates-testing
+	${PKG_MGR} -y install docker docker-compose
+    fi
+  fi
 }
 
 ## Define some variables
@@ -39,7 +49,7 @@ yml_file="${script_dir}/docker-compose.yml"
 unit_file="${script_dir}/compose-mediaserver.service"
 env_file="${script_dir}/ids.env"
 
-declare -a services=(plex plexrequests nzbget sonarr radarr couchpotato plexpy nginx)
+declare -a services=(plex plexrequests nzbget sonarr radarr plexpy nginx)
 
 ## Tests
 function tests() {
@@ -82,15 +92,6 @@ function tests() {
 			has_firewalld=0
 		fi
 
-}
-
-function install_docker() {
-  yum -y update
-  yum -y install python-pip
-  pip install --upgrade pip
-  curl -sL https://get.docker.com > docker.sh
-  bash docker.sh
-  pip install docker-compose
 }
 
 function disable_selinux() {

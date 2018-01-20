@@ -8,36 +8,40 @@ services:
     env_file: ./ids.env
     container_name: plexrequests
     ports:
-      - "127.0.0.1:3000:3000"
+            - "127.0.0.1:3000:3000"
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /apps/configs/plexrequests:/config 
+      - /apps/configs/plexrequests:/config
     links:
-      - couchpotato
+      - radarr
       - sonarr
       - plex
 
   plex:
-    image: plexinc/pms-docker
+    image: plexinc/pms-docker:plexpass
     env_file: ./ids.env
     container_name: plex
     network_mode: host
-    restart: always
+    restart: unless-stopped
     environment:
-      - VERSION=latest
+      - PLEX_CLAIM=""
+      - PLEX_UID=1010
+      - PLEX_GID=1010
     volumes:
       - /apps/configs/plex:/config
       - /media/movies:/data/movies
       - /media/tv:/data/tvshows
-  
+      - /media/extras:/data/extras
+      - /dev/shm:/tmp
+
   sonarr:
-    image: linuxserver/sonarr:latest 
+    image: linuxserver/sonarr:latest
     env_file: ./ids.env
     container_name: sonarr
     ports:
       - "127.0.0.1:8989:8989"
       - "127.0.0.1:9898:9898"
-    restart: always
+    restart: unless-stopped
     volumes:
       - /dev/rtc:/dev/rtc:ro
       - /apps/configs/sonarr:/config
@@ -47,45 +51,45 @@ services:
       - nzbget
       - plex
 
-  couchpotato:
-    image: linuxserver/couchpotato:latest 
+  radarr:
+    image: linuxserver/radarr:latest
     env_file: ./ids.env
-    container_name: couchpotato
+    container_name: radarr
     ports:
-      - "127.0.0.1:5050:5050"
-    restart: always
+      - "127.0.0.1:7878:7878"
+    restart: unless-stopped
     volumes:
-      - /apps/configs/couchpotato:/config
+      - /apps/configs/radarr:/config
       - /media/movies:/movies
       - /media/downloads/:/downloads
     links:
-      - plex
       - nzbget
+      - plex
 
   nzbget:
-    image: linuxserver/nzbget:latest
+    image: linuxserver/nzbget:testing
     env_file: ./ids.env
     container_name: nzbget
     ports:
       - "127.0.0.1:6789:6789"
-    restart: always
+    restart: unless-stopped
     volumes:
       - /apps/configs/nzbget:/config
       - /media/downloads:/downloads
-    
+
   plexpy:
     image: linuxserver/plexpy:latest
     env_file: ./ids.env
     container_name: plexpy
+    restart: unless-stopped
     ports:
       - "127.0.0.1:8181:8181"
-    restart: always
     volumes:
       - /apps/configs/plexpy:/config
-      - /apps/configs/plex/Library/Application\ Support/Plex\ Media\ Server/Logs/:/logs
+      - /apps/configs/plex/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs
     links:
       - plex
-  
+
   nginx:
     image: nginx:latest
     container_name: nginx
@@ -93,4 +97,5 @@ services:
     network_mode: host
     volumes:
       - /etc/nginx:/etc/nginx
+      - /etc/letsencrypt:/etc/letsencrypt
     command: /bin/bash -c "nginx -g 'daemon off;'"
