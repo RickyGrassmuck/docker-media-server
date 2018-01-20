@@ -4,6 +4,27 @@ if [[ $UID -ne 0 ]]; then
     exit 1;
 fi
 
+## Install Prerequisites
+function install_docker() {
+  if [[ ! -z $(grep CentOS /etc/redhat-release) ]];
+  then
+    PKG_MGR="yum"
+  elif [[ ! -z $(grep Fedora /etc/redhat-release) ]];
+  then
+    PKG_MGR="dnf"
+  else
+      echo "Not a supported Platform"
+      exit 1;
+  fi
+  
+  ${PKG_MGR} -y update
+  ${PKG_MGR} dnf -y install python-pip
+  pip install --upgrade pip
+  curl -sL https://get.docker.com > docker.sh
+  bash docker.sh
+  pip install docker-compose
+}
+
 ## Define some variables
 docker=$(type -p docker)
 docker_compose=$(type -p docker-compose)
