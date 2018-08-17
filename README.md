@@ -1,6 +1,6 @@
 # Docker Media Server
 
-**NOTE: HERE BE DRAGONS! Seriously though, it appears this repo has been getting a bit of traffic lately. Please keep in mind that this project is not polished at all so be sure to only use it if you understand what the script does and can deal with fixing shit that will inevitably go wrong when using.
+**NOTE: HERE BE DRAGONS! Seriously though, it appears this repo has been getting a bit of traffic lately. Please keep in mind that this project is not polished at all so be sure to only use it if you understand what the script does and can deal with fixing shit that will inevitably go wrong when using.**
 
 That said, I will be overhauling this very soon to make it more robust and easier to use since people seem to be having a good use for it.
 
